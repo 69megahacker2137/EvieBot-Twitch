@@ -1,29 +1,34 @@
-
 class TwitchChatQueue {
-    private queue: Array<string> = [];
+  private queue: Array<string> = [];
+  private isRunning: boolean = false;
 
-    private ewaBot: any;
+  private evieBot;
 
-    constructor( ewaBot: any ) {
-        this.ewaBot = ewaBot;
+  constructor(evieBot: any) {
+    this.evieBot = evieBot;
+  }
+
+  public addToQueue(message: string) {
+    this.queue.push(message);
+    this.sendMessage();
+  }
+
+  private async sendMessage() {
+    if (this.isRunning || this.queue.length === 0) {
+      return;
     }
 
-    public addToQueue(message: string) {
-        this.queue.push(message);
+    this.isRunning = true;
+
+    const message = this.queue.shift();
+
+    if (message) {
+      await this.evieBot.say(message);
     }
 
-    public async processQueue(): Promise<void> {
-        return new Promise(async (resolve) => {
-            while(this.queue.length > 0) {
-                const message = this.queue.shift();
-
-                if(message) {
-                    await this.ewaBot.say(message);
-                    resolve();
-                }
-            }
-        });
-    }
+    this.isRunning = false;
+    this.sendMessage();
+  }
 }
 
 export default TwitchChatQueue;
