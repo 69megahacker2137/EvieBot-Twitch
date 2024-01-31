@@ -10,8 +10,12 @@ class EvieBot {
   private browser: puppeteer.Browser | undefined;
   private page: puppeteer.Page | undefined;
 
+  constructor() {
+    this.connect();
+  }
+
   // Connect to EvieBot by launching a browser
-  public async connect(): Promise<void> {
+  private async connect(): Promise<void> {
     this.browser = await puppeteer.launch({ headless: false });
     this.page = await this.browser.newPage();
 

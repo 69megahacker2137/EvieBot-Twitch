@@ -19,8 +19,28 @@ const EwaClient = new EvieBot();
 const ChatQueue = new TwitchChatQueue(EwaClient);
 
 BotClient.on('message', (message) => {
-  ChatQueue.addToQueue(message);
-});
+  switch (message.type) {
+    case 'PRIVMSG': {
+      const bot_name = `@${BotClient.username}`;
 
-BotClient.connect();
-EwaClient.connect();
+      if (message.content.includes(bot_name)) {
+        // Remove @bot_name from string
+        const msg = message.content.replace(bot_name, '').trim();
+        ChatQueue.addToQueue(msg);
+      } else {
+        console.log(message);
+      }
+
+      break;
+    }
+    case 'PING': {
+      // Keepalive messages, to stay connected to Twitch IRC
+      BotClient.sendMessage('PONG', message.content);
+      break;
+    }
+    default: {
+      console.log(message.content);
+      break;
+    }
+  }
+});

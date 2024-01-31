@@ -1,4 +1,5 @@
-import WebSocket from 'websocket';
+// import WebSocket from 'websocket';
+import WebSocket, { WebSocketServer } from 'ws';
 import { EventEmitter } from 'stream';
 
 type IdentityType = {
@@ -11,58 +12,65 @@ export type TwitchBotProperties = {
   identity: IdentityType;
 };
 
+type TwitchIRCMessage = 'PASS' | 'NICK' | 'JOIN' | 'PRIVMSG' | 'PONG';
+
+import TwitchMessage from './TwitchMesage';
+
 const TWITCH_WEBSOCKET_IRC_SERVER = 'ws://irc-ws.chat.twitch.tv:80';
-const HELLO_MESSAGE = 'CZĘŚĆ JESTEM EVIE BOT HIHIIHIHI a dlaczego nagi chłopak je banany ?';
+const HELLO_MESSAGE = 'CZĘŚĆ JESTEM EVIE BOT HIHIIHIHI a dlaczego nagi chłopak je banany ? 🍌🍌';
 
 class TwitchClient extends EventEmitter {
+  public username: string;
+
   private channel: string;
   private identity: IdentityType;
+
+  private ws: WebSocket;
 
   constructor(props: TwitchBotProperties) {
     super();
     this.channel = props.channels;
     this.identity = props.identity;
+    this.username = props.identity.username;
+    this.ws = new WebSocket(TWITCH_WEBSOCKET_IRC_SERVER, {});
+
+    this.connect();
   }
 
-  public async connect(): Promise<void> {
-    const ws = new WebSocket.client();
+  connect(): void {
+    this.ws.on('open', () => {
+      // Auth
+      this.sendMessage('PASS', `oauth:${process.env.BOT_AUTH}`);
+      this.sendMessage('NICK', `${this.identity.username}`);
+      this.sendMessage('JOIN', `#${this.channel}`);
 
-    ws.on('connectFailed', (error) => {
-      console.log('Connect Error: ' + error.toString());
+      // Hello message
+      this.sendMessage('PRIVMSG', `:${HELLO_MESSAGE}`);
     });
 
-    ws.on('connect', (connection) => {
-      console.log('WebSocket Client Connected to Twitch IRC');
-
-      // Send CAP (optional), PASS, and NICK messages
-      // Additional tags from IRC server, for this bot you need only PRIVMSG - it's reading all messages
-      // connection.sendUTF('CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands');
-      connection.sendUTF(`PASS oauth:${this.identity.auth}`);
-      connection.sendUTF(`NICK ${this.identity.username}`);
-      connection.sendUTF(`JOIN #${this.channel}`);
-      connection.sendUTF(`PRIVMSG #${this.channel} :${HELLO_MESSAGE}`);
-
-      connection.on('message', (message) => {
-        if (message.type === 'utf8') {
-          this.handleMessage(message.utf8Data);
-        }
-      });
+    this.ws.on('message', (message) => {
+      this.handleMessage(message.toString());
     });
-
-    ws.connect(TWITCH_WEBSOCKET_IRC_SERVER);
   }
 
   private async handleMessage(rawMessage: string): Promise<void> {
-    let message: string = rawMessage;
+    const message = new TwitchMessage(rawMessage);
 
-    if (message.includes('PRIVMSG')) {
-      message = rawMessage.substring(rawMessage.search('PRIVMSG'));
-      message = message.substring(message.search(':') + 1);
-      message = message.replace(/\r\n/g, '');
+    this.emit('message', message as TwitchMessage);
+  }
 
-      this.emit('message', message);
-    } else {
-      console.log(message);
+  public sendMessage(type: TwitchIRCMessage, message: string) {
+    switch (type) {
+      case 'PRIVMSG': {
+        this.ws.send(`${type} #${this.channel} :${message}`);
+        break;
+      }
+      case 'PONG': {
+        this.ws.send(`${type} :${message}`);
+      }
+      default: {
+        this.ws.send(`${type} ${message}`);
+      }
     }
   }
 }
