@@ -45,7 +45,7 @@ class TwitchClient extends EventEmitter {
       this.sendMessage('JOIN', `#${this.channel}`);
 
       // Hello message
-      this.sendMessage('PRIVMSG', `:${HELLO_MESSAGE}`);
+      this.sendMessage('PRIVMSG', `${HELLO_MESSAGE}`);
     });
 
     this.ws.on('message', (message) => {

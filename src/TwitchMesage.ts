@@ -1,5 +1,3 @@
-// type IRCMessageType = 'NOTICE' | 'PART' | 'PING' | 'PRIVMSG';
-
 class TwitchMessage {
   public type: string | undefined;
   public channel: string | undefined;
