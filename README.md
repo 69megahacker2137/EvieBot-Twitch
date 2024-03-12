@@ -2,7 +2,7 @@
 
 ᴛᴡɪᴛᴄʜ ʙᴏᴛ ɪɴᴛᴇɢʀᴀᴛɪᴏɴ ᴡɪᴛʜ ᴇᴠɪᴇ ʙᴏᴛ
 
-With Eviebot, you'll have access to the most intelligent, funny and horniest messages on the planet 😈😈😈😈
+With Eviebot, you'll have access to the most intelligent and funniest messages on the planet 😈😈😈😈
 
   ### Technologies:
   ```- NodeJS```
